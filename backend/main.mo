@@ -26,15 +26,17 @@ actor {
   stable var adminPrincipal : ?Principal = null;
 
   public shared(msg) func setAdmin() : async Result.Result<Text, Text> {
-    switch (adminPrincipal) {
-      case (null) {
-        adminPrincipal := ?msg.caller;
-        #ok("Admin set successfully")
-      };
-      case (?_) {
-        #err("Admin already set")
-      };
-    }
+    adminPrincipal := ?msg.caller;
+    #ok("Admin set successfully")
+  };
+
+  public shared(msg) func setSpecificAdmin(newAdmin: Principal) : async Result.Result<Text, Text> {
+    adminPrincipal := ?newAdmin;
+    #ok("Admin set successfully to " # Principal.toText(newAdmin))
+  };
+
+  public query func getAdmin() : async ?Principal {
+    adminPrincipal
   };
 
   public shared(msg) func createAppointment(date: Text, time: Text, name: Text, email: Text) : async Result.Result<Text, Text> {

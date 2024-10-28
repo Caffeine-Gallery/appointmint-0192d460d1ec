@@ -18,9 +18,11 @@ type Appointment =
  };
 service : {
   createAppointment: (text, text, text, text) -> (Result);
+  getAdmin: () -> (opt principal) query;
   getAllAppointments: () -> (Result_1);
   getAppointment: (text) -> (opt Appointment) query;
   getAvailableSlots: (text) -> (vec text) query;
   isAdmin: () -> (bool) query;
   setAdmin: () -> (Result);
+  setSpecificAdmin: (principal) -> (Result);
 }

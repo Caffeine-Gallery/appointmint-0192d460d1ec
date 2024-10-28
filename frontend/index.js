@@ -1,4 +1,5 @@
 import { AuthClient } from "@dfinity/auth-client";
+import { Principal } from "@dfinity/principal";
 import { backend } from 'declarations/backend';
 
 let authClient;
@@ -12,6 +13,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   const bookButton = document.getElementById('bookButton');
   const confirmationMessage = document.getElementById('confirmationMessage');
   const loginButton = document.getElementById('loginButton');
+  const setAdminButton = document.getElementById('setAdminButton');
+  const setSpecificAdminButton = document.getElementById('setSpecificAdminButton');
+  const adminPrincipalInput = document.getElementById('adminPrincipalInput');
   const userView = document.getElementById('userView');
   const adminView = document.getElementById('adminView');
   const refreshAppointmentsButton = document.getElementById('refreshAppointments');
@@ -33,6 +37,40 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       },
     });
+  };
+
+  setAdminButton.onclick = async () => {
+    try {
+      const result = await backend.setAdmin();
+      if ('ok' in result) {
+        alert("You are now set as an admin.");
+      } else if ('err' in result) {
+        alert("Error setting admin: " + result.err);
+      }
+    } catch (error) {
+      console.error('Error setting admin:', error);
+      alert('An error occurred while setting admin. Please try again.');
+    }
+  };
+
+  setSpecificAdminButton.onclick = async () => {
+    const principalId = adminPrincipalInput.value.trim();
+    if (!principalId) {
+      alert("Please enter a valid Principal ID.");
+      return;
+    }
+    try {
+      const principal = Principal.fromText(principalId);
+      const result = await backend.setSpecificAdmin(principal);
+      if ('ok' in result) {
+        alert("Admin set successfully: " + result.ok);
+      } else if ('err' in result) {
+        alert("Error setting admin: " + result.err);
+      }
+    } catch (error) {
+      console.error('Error setting specific admin:', error);
+      alert('An error occurred while setting the specific admin. Please check the Principal ID and try again.');
+    }
   };
 
   refreshAppointmentsButton.onclick = loadAdminDashboard;

@@ -17,11 +17,13 @@ export const idlFactory = ({ IDL }) => {
         [Result],
         [],
       ),
+    'getAdmin' : IDL.Func([], [IDL.Opt(IDL.Principal)], ['query']),
     'getAllAppointments' : IDL.Func([], [Result_1], []),
     'getAppointment' : IDL.Func([IDL.Text], [IDL.Opt(Appointment)], ['query']),
     'getAvailableSlots' : IDL.Func([IDL.Text], [IDL.Vec(IDL.Text)], ['query']),
     'isAdmin' : IDL.Func([], [IDL.Bool], ['query']),
     'setAdmin' : IDL.Func([], [Result], []),
+    'setSpecificAdmin' : IDL.Func([IDL.Principal], [Result], []),
   });
 };
 export const init = ({ IDL }) => { return []; };
