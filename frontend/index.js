@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const userView = document.getElementById('userView');
   const adminView = document.getElementById('adminView');
   const refreshAppointmentsButton = document.getElementById('refreshAppointments');
+  const setAvailabilityButton = document.getElementById('setAvailabilityButton');
 
   authClient = await AuthClient.create();
 
@@ -75,10 +76,38 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   refreshAppointmentsButton.onclick = loadAdminDashboard;
 
+  setAvailabilityButton.onclick = async () => {
+    const date = document.getElementById('availabilityDate').value;
+    const startTime = document.getElementById('availabilityStartTime').value;
+    const endTime = document.getElementById('availabilityEndTime').value;
+
+    if (!date || !startTime || !endTime) {
+      alert("Please fill in all availability fields.");
+      return;
+    }
+
+    try {
+      const result = await backend.setDayAvailability(date, true, startTime, endTime);
+      if ('ok' in result) {
+        alert("Availability set successfully.");
+      } else if ('err' in result) {
+        alert("Error setting availability: " + result.err);
+      }
+    } catch (error) {
+      console.error('Error setting availability:', error);
+      alert('An error occurred while setting availability. Please try again.');
+    }
+  };
+
   datePicker.addEventListener('change', async (e) => {
     selectedDate = e.target.value;
-    const availableSlots = await backend.getAvailableSlots(selectedDate);
-    displayTimeSlots(availableSlots);
+    const result = await backend.getAvailableSlots(selectedDate);
+    if ('ok' in result) {
+      displayTimeSlots(result.ok);
+    } else if ('err' in result) {
+      alert("Error getting available slots: " + result.err);
+      timeSlots.innerHTML = '';
+    }
   });
 
   timeSlots.addEventListener('click', (e) => {
@@ -96,10 +125,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     e.preventDefault();
     const name = document.getElementById('name').value;
     const email = document.getElementById('email').value;
+    const phoneNumber = document.getElementById('phoneNumber').value;
 
     try {
       showLoading(true);
-      const result = await backend.createAppointment(selectedDate, selectedTime, name, email);
+      const result = await backend.createAppointment(selectedDate, selectedTime, name, email, phoneNumber);
       if ('ok' in result) {
         showConfirmation(result.ok);
         resetForm();
@@ -178,6 +208,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           <th>Time</th>
           <th>Name</th>
           <th>Email</th>
+          <th>Phone Number</th>
         </tr>
       </thead>
       <tbody>
@@ -191,6 +222,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         <td>${appointment.time}</td>
         <td>${appointment.name}</td>
         <td>${appointment.email}</td>
+        <td>${appointment.phoneNumber}</td>
       `;
       tbody.appendChild(row);
     });

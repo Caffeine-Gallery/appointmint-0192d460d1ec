@@ -37,6 +37,10 @@
                             <label for="email" class="form-label">Email:</label>
                             <input type="email" id="email" class="form-control" required>
                         </div>
+                        <div class="mb-3">
+                            <label for="phoneNumber" class="form-label">Phone Number:</label>
+                            <input type="tel" id="phoneNumber" class="form-control" required>
+                        </div>
                         <button type="submit" class="btn btn-primary" id="bookButton" disabled>Book Appointment</button>
                     </form>
                 </div>
@@ -45,6 +49,27 @@
         </div>
         <div id="adminView" style="display: none;">
             <h2>Admin Dashboard</h2>
+            <div class="mb-3">
+                <h3>Set Availability</h3>
+                <div class="row">
+                    <div class="col-md-3">
+                        <label for="availabilityDate" class="form-label">Date:</label>
+                        <input type="date" id="availabilityDate" class="form-control">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="availabilityStartTime" class="form-label">Start Time:</label>
+                        <input type="time" id="availabilityStartTime" class="form-control">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="availabilityEndTime" class="form-label">End Time:</label>
+                        <input type="time" id="availabilityEndTime" class="form-control">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">&nbsp;</label>
+                        <button id="setAvailabilityButton" class="btn btn-primary d-block">Set Availability</button>
+                    </div>
+                </div>
+            </div>
             <button id="refreshAppointments" class="btn btn-secondary mb-3">Refresh Appointments</button>
             <div id="appointmentsList"></div>
         </div>

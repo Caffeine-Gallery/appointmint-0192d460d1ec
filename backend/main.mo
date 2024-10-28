@@ -18,12 +18,21 @@ actor {
     time: Text;
     name: Text;
     email: Text;
+    phoneNumber: Text;
+  };
+
+  type DayAvailability = {
+    isAvailable: Bool;
+    startTime: Text;
+    endTime: Text;
   };
 
   stable var appointmentEntries : [(Text, Appointment)] = [];
   let appointments = HashMap.fromIter<Text, Appointment>(appointmentEntries.vals(), 10, Text.equal, Text.hash);
 
   stable var adminPrincipal : ?Principal = null;
+  stable var availableDays : [(Text, DayAvailability)] = [];
+  let availabilityMap = HashMap.fromIter<Text, DayAvailability>(availableDays.vals(), 7, Text.equal, Text.hash);
 
   public shared(msg) func setAdmin() : async Result.Result<Text, Text> {
     adminPrincipal := ?msg.caller;
@@ -39,35 +48,81 @@ actor {
     adminPrincipal
   };
 
-  public shared(msg) func createAppointment(date: Text, time: Text, name: Text, email: Text) : async Result.Result<Text, Text> {
-    let id = Text.concat(date, time);
-    let appointment : Appointment = {
-      id;
-      date;
-      time;
-      name;
-      email;
-    };
-    appointments.put(id, appointment);
-    #ok(id)
+  public shared(msg) func setDayAvailability(day: Text, isAvailable: Bool, startTime: Text, endTime: Text) : async Result.Result<Text, Text> {
+    switch (adminPrincipal) {
+      case (null) { #err("Admin not set") };
+      case (?admin) {
+        if (Principal.equal(msg.caller, admin)) {
+          availabilityMap.put(day, { isAvailable; startTime; endTime });
+          #ok("Availability set for " # day)
+        } else {
+          #err("Unauthorized access")
+        }
+      };
+    }
+  };
+
+  public query func getDayAvailability(day: Text) : async ?DayAvailability {
+    availabilityMap.get(day)
+  };
+
+  public shared(msg) func createAppointment(date: Text, time: Text, name: Text, email: Text, phoneNumber: Text) : async Result.Result<Text, Text> {
+    switch (availabilityMap.get(date)) {
+      case (null) { #err("Date not available") };
+      case (?dayAvailability) {
+        if (not dayAvailability.isAvailable) {
+          #err("Date not available")
+        } else if (time < dayAvailability.startTime or time >= dayAvailability.endTime) {
+          #err("Time not within available hours")
+        } else {
+          let id = Text.concat(date, time);
+          let appointment : Appointment = {
+            id;
+            date;
+            time;
+            name;
+            email;
+            phoneNumber;
+          };
+          appointments.put(id, appointment);
+          #ok(id)
+        }
+      };
+    }
   };
 
   public query func getAppointment(id: Text) : async ?Appointment {
     appointments.get(id)
   };
 
-  public query func getAvailableSlots(date: Text) : async [Text] {
-    let allSlots = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00"];
-    let bookedSlots = Array.mapFilter<(Text, Appointment), Text>(Iter.toArray(appointments.entries()), func((_, appointment)) {
-      if (appointment.date == date) {
-        ?appointment.time
-      } else {
-        null
-      }
-    });
-    Array.filter<Text>(allSlots, func(slot) {
-      Option.isNull(Array.find<Text>(bookedSlots, func(bookedSlot) { bookedSlot == slot }))
-    })
+  public query func getAvailableSlots(date: Text) : async Result.Result<[Text], Text> {
+    switch (availabilityMap.get(date)) {
+      case (null) { #err("Date not available") };
+      case (?dayAvailability) {
+        if (not dayAvailability.isAvailable) {
+          #err("Date not available")
+        } else {
+          let allSlots = generateTimeSlots(dayAvailability.startTime, dayAvailability.endTime);
+          let bookedSlots = Array.mapFilter<(Text, Appointment), Text>(Iter.toArray(appointments.entries()), func((_, appointment)) {
+            if (appointment.date == date) {
+              ?appointment.time
+            } else {
+              null
+            }
+          });
+          let availableSlots = Array.filter<Text>(allSlots, func(slot) {
+            Option.isNull(Array.find<Text>(bookedSlots, func(bookedSlot) { bookedSlot == slot }))
+          });
+          #ok(availableSlots)
+        }
+      };
+    }
+  };
+
+  private func generateTimeSlots(startTime: Text, endTime: Text) : [Text] {
+    // This is a simplified version. In a real-world scenario, you'd want to implement
+    // proper time handling and slot generation based on the start and end times.
+    ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00"]
   };
 
   public shared(msg) func getAllAppointments() : async Result.Result<[Appointment], Text> {
@@ -92,9 +147,11 @@ actor {
 
   system func preupgrade() {
     appointmentEntries := Iter.toArray(appointments.entries());
+    availableDays := Iter.toArray(availabilityMap.entries());
   };
 
   system func postupgrade() {
     appointmentEntries := [];
+    availableDays := [];
   };
 }

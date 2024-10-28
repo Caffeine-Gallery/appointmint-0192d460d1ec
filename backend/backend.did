@@ -1,12 +1,23 @@
-type Result_1 = 
+type Result_2 = 
  variant {
    err: text;
    ok: vec Appointment;
+ };
+type Result_1 = 
+ variant {
+   err: text;
+   ok: vec text;
  };
 type Result = 
  variant {
    err: text;
    ok: text;
+ };
+type DayAvailability = 
+ record {
+   endTime: text;
+   isAvailable: bool;
+   startTime: text;
  };
 type Appointment = 
  record {
@@ -14,15 +25,18 @@ type Appointment =
    email: text;
    id: text;
    name: text;
+   phoneNumber: text;
    time: text;
  };
 service : {
-  createAppointment: (text, text, text, text) -> (Result);
+  createAppointment: (text, text, text, text, text) -> (Result);
   getAdmin: () -> (opt principal) query;
-  getAllAppointments: () -> (Result_1);
+  getAllAppointments: () -> (Result_2);
   getAppointment: (text) -> (opt Appointment) query;
-  getAvailableSlots: (text) -> (vec text) query;
+  getAvailableSlots: (text) -> (Result_1) query;
+  getDayAvailability: (text) -> (opt DayAvailability) query;
   isAdmin: () -> (bool) query;
   setAdmin: () -> (Result);
+  setDayAvailability: (text, bool, text, text) -> (Result);
   setSpecificAdmin: (principal) -> (Result);
 }
