@@ -1,0 +1,13 @@
+type Appointment = 
+ record {
+   date: text;
+   email: text;
+   id: text;
+   name: text;
+   time: text;
+ };
+service : {
+  createAppointment: (text, text, text, text) -> (text);
+  getAppointment: (text) -> (opt Appointment) query;
+  getAvailableSlots: (text) -> (vec text) query;
+}
