@@ -21,11 +21,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   loginButton.onclick = async () => {
     await authClient.login({
       identityProvider: "https://identity.ic0.app/#authorize",
-      onSuccess: () => {
-        userView.style.display = 'none';
-        adminView.style.display = 'block';
-        loginButton.style.display = 'none';
-        loadAdminDashboard();
+      onSuccess: async () => {
+        const isAdmin = await backend.isAdmin();
+        if (isAdmin) {
+          userView.style.display = 'none';
+          adminView.style.display = 'block';
+          loginButton.style.display = 'none';
+          loadAdminDashboard();
+        } else {
+          alert("You are not authorized as an admin.");
+        }
       },
     });
   };
@@ -56,9 +61,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     try {
       showLoading(true);
-      const appointmentId = await backend.createAppointment(selectedDate, selectedTime, name, email);
-      showConfirmation(appointmentId);
-      resetForm();
+      const result = await backend.createAppointment(selectedDate, selectedTime, name, email);
+      if ('ok' in result) {
+        showConfirmation(result.ok);
+        resetForm();
+      } else if ('err' in result) {
+        throw new Error(result.err);
+      }
     } catch (error) {
       console.error('Error booking appointment:', error);
       alert('An error occurred while booking the appointment. Please try again.');
@@ -99,8 +108,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   async function loadAdminDashboard() {
     try {
-      const appointments = await backend.getAllAppointments();
-      displayAppointments(appointments);
+      const identity = await authClient.getIdentity();
+      if (!identity) {
+        throw new Error("Not authenticated");
+      }
+      const result = await backend.getAllAppointments();
+      if ('ok' in result) {
+        displayAppointments(result.ok);
+      } else if ('err' in result) {
+        throw new Error(result.err);
+      }
     } catch (error) {
       console.error('Error loading appointments:', error);
       alert('An error occurred while loading appointments. Please try again.');

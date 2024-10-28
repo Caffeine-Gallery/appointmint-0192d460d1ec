@@ -1,3 +1,13 @@
+type Result_1 = 
+ variant {
+   err: text;
+   ok: vec Appointment;
+ };
+type Result = 
+ variant {
+   err: text;
+   ok: text;
+ };
 type Appointment = 
  record {
    date: text;
@@ -7,9 +17,10 @@ type Appointment =
    time: text;
  };
 service : {
-  createAppointment: (text, text, text, text) -> (text);
-  getAllAppointments: () -> (vec Appointment);
+  createAppointment: (text, text, text, text) -> (Result);
+  getAllAppointments: () -> (Result_1);
   getAppointment: (text) -> (opt Appointment) query;
   getAvailableSlots: (text) -> (vec text) query;
-  setAdmin: () -> (text);
+  isAdmin: () -> (bool) query;
+  setAdmin: () -> (Result);
 }

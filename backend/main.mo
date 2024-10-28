@@ -1,3 +1,4 @@
+import Bool "mo:base/Bool";
 import Hash "mo:base/Hash";
 
 import Array "mo:base/Array";
@@ -6,6 +7,7 @@ import Iter "mo:base/Iter";
 import Nat "mo:base/Nat";
 import Option "mo:base/Option";
 import Principal "mo:base/Principal";
+import Result "mo:base/Result";
 import Text "mo:base/Text";
 import Time "mo:base/Time";
 
@@ -23,16 +25,19 @@ actor {
 
   stable var adminPrincipal : ?Principal = null;
 
-  public shared(msg) func setAdmin() : async Text {
-    if (Option.isNull(adminPrincipal)) {
-      adminPrincipal := ?msg.caller;
-      return "Admin set successfully";
-    } else {
-      return "Admin already set";
+  public shared(msg) func setAdmin() : async Result.Result<Text, Text> {
+    switch (adminPrincipal) {
+      case (null) {
+        adminPrincipal := ?msg.caller;
+        #ok("Admin set successfully")
+      };
+      case (?_) {
+        #err("Admin already set")
+      };
     }
   };
 
-  public shared(msg) func createAppointment(date: Text, time: Text, name: Text, email: Text) : async Text {
+  public shared(msg) func createAppointment(date: Text, time: Text, name: Text, email: Text) : async Result.Result<Text, Text> {
     let id = Text.concat(date, time);
     let appointment : Appointment = {
       id;
@@ -42,7 +47,7 @@ actor {
       email;
     };
     appointments.put(id, appointment);
-    id
+    #ok(id)
   };
 
   public query func getAppointment(id: Text) : async ?Appointment {
@@ -63,9 +68,24 @@ actor {
     })
   };
 
-  public shared(msg) func getAllAppointments() : async [Appointment] {
-    assert(Option.isSome(adminPrincipal) and Principal.equal(msg.caller, Option.unwrap(adminPrincipal)));
-    Iter.toArray(appointments.vals())
+  public shared(msg) func getAllAppointments() : async Result.Result<[Appointment], Text> {
+    switch (adminPrincipal) {
+      case (null) { #err("Admin not set") };
+      case (?admin) {
+        if (Principal.equal(msg.caller, admin)) {
+          #ok(Iter.toArray(appointments.vals()))
+        } else {
+          #err("Unauthorized access")
+        }
+      };
+    }
+  };
+
+  public query(msg) func isAdmin() : async Bool {
+    switch (adminPrincipal) {
+      case (null) { false };
+      case (?admin) { Principal.equal(msg.caller, admin) };
+    }
   };
 
   system func preupgrade() {
