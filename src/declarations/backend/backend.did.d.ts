@@ -11,8 +11,10 @@ export interface Appointment {
 }
 export interface _SERVICE {
   'createAppointment' : ActorMethod<[string, string, string, string], string>,
+  'getAllAppointments' : ActorMethod<[], Array<Appointment>>,
   'getAppointment' : ActorMethod<[string], [] | [Appointment]>,
   'getAvailableSlots' : ActorMethod<[string], Array<string>>,
+  'setAdmin' : ActorMethod<[], string>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

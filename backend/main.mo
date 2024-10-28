@@ -5,6 +5,7 @@ import HashMap "mo:base/HashMap";
 import Iter "mo:base/Iter";
 import Nat "mo:base/Nat";
 import Option "mo:base/Option";
+import Principal "mo:base/Principal";
 import Text "mo:base/Text";
 import Time "mo:base/Time";
 
@@ -20,7 +21,18 @@ actor {
   stable var appointmentEntries : [(Text, Appointment)] = [];
   let appointments = HashMap.fromIter<Text, Appointment>(appointmentEntries.vals(), 10, Text.equal, Text.hash);
 
-  public func createAppointment(date: Text, time: Text, name: Text, email: Text) : async Text {
+  stable var adminPrincipal : ?Principal = null;
+
+  public shared(msg) func setAdmin() : async Text {
+    if (Option.isNull(adminPrincipal)) {
+      adminPrincipal := ?msg.caller;
+      return "Admin set successfully";
+    } else {
+      return "Admin already set";
+    }
+  };
+
+  public shared(msg) func createAppointment(date: Text, time: Text, name: Text, email: Text) : async Text {
     let id = Text.concat(date, time);
     let appointment : Appointment = {
       id;
@@ -49,6 +61,11 @@ actor {
     Array.filter<Text>(allSlots, func(slot) {
       Option.isNull(Array.find<Text>(bookedSlots, func(bookedSlot) { bookedSlot == slot }))
     })
+  };
+
+  public shared(msg) func getAllAppointments() : async [Appointment] {
+    assert(Option.isSome(adminPrincipal) and Principal.equal(msg.caller, Option.unwrap(adminPrincipal)));
+    Iter.toArray(appointments.vals())
   };
 
   system func preupgrade() {

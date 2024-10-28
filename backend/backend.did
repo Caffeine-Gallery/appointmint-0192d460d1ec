@@ -8,6 +8,8 @@ type Appointment =
  };
 service : {
   createAppointment: (text, text, text, text) -> (text);
+  getAllAppointments: () -> (vec Appointment);
   getAppointment: (text) -> (opt Appointment) query;
   getAvailableSlots: (text) -> (vec text) query;
+  setAdmin: () -> (text);
 }

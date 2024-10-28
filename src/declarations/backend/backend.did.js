@@ -12,8 +12,10 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Text],
         [],
       ),
+    'getAllAppointments' : IDL.Func([], [IDL.Vec(Appointment)], []),
     'getAppointment' : IDL.Func([IDL.Text], [IDL.Opt(Appointment)], ['query']),
     'getAvailableSlots' : IDL.Func([IDL.Text], [IDL.Vec(IDL.Text)], ['query']),
+    'setAdmin' : IDL.Func([], [IDL.Text], []),
   });
 };
 export const init = ({ IDL }) => { return []; };

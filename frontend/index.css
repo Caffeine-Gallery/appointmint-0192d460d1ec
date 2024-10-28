@@ -25,3 +25,16 @@ h1 {
 #confirmationMessage {
     display: none;
 }
+
+#loginSection {
+    text-align: right;
+    margin-bottom: 20px;
+}
+
+#adminView {
+    display: none;
+}
+
+#appointmentsList {
+    margin-top: 20px;
+}

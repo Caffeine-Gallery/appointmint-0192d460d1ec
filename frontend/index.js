@@ -1,14 +1,36 @@
+import { AuthClient } from "@dfinity/auth-client";
 import { backend } from 'declarations/backend';
 
+let authClient;
 let selectedDate = '';
 let selectedTime = '';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   const datePicker = document.getElementById('datePicker');
   const timeSlots = document.getElementById('timeSlots');
   const appointmentForm = document.getElementById('appointmentForm');
   const bookButton = document.getElementById('bookButton');
   const confirmationMessage = document.getElementById('confirmationMessage');
+  const loginButton = document.getElementById('loginButton');
+  const userView = document.getElementById('userView');
+  const adminView = document.getElementById('adminView');
+  const refreshAppointmentsButton = document.getElementById('refreshAppointments');
+
+  authClient = await AuthClient.create();
+
+  loginButton.onclick = async () => {
+    await authClient.login({
+      identityProvider: "https://identity.ic0.app/#authorize",
+      onSuccess: () => {
+        userView.style.display = 'none';
+        adminView.style.display = 'block';
+        loginButton.style.display = 'none';
+        loadAdminDashboard();
+      },
+    });
+  };
+
+  refreshAppointmentsButton.onclick = loadAdminDashboard;
 
   datePicker.addEventListener('change', async (e) => {
     selectedDate = e.target.value;
@@ -73,5 +95,50 @@ document.addEventListener('DOMContentLoaded', () => {
   function showLoading(isLoading) {
     bookButton.disabled = isLoading;
     bookButton.innerHTML = isLoading ? '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Booking...' : 'Book Appointment';
+  }
+
+  async function loadAdminDashboard() {
+    try {
+      const appointments = await backend.getAllAppointments();
+      displayAppointments(appointments);
+    } catch (error) {
+      console.error('Error loading appointments:', error);
+      alert('An error occurred while loading appointments. Please try again.');
+    }
+  }
+
+  function displayAppointments(appointments) {
+    const appointmentsList = document.getElementById('appointmentsList');
+    appointmentsList.innerHTML = '';
+    if (appointments.length === 0) {
+      appointmentsList.innerHTML = '<p>No appointments found.</p>';
+      return;
+    }
+    const table = document.createElement('table');
+    table.classList.add('table', 'table-striped');
+    table.innerHTML = `
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Time</th>
+          <th>Name</th>
+          <th>Email</th>
+        </tr>
+      </thead>
+      <tbody>
+      </tbody>
+    `;
+    const tbody = table.querySelector('tbody');
+    appointments.forEach(appointment => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${appointment.date}</td>
+        <td>${appointment.time}</td>
+        <td>${appointment.name}</td>
+        <td>${appointment.email}</td>
+      `;
+      tbody.appendChild(row);
+    });
+    appointmentsList.appendChild(table);
   }
 });
